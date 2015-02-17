@@ -1,19 +1,36 @@
+﻿<!DOCTYPE html>
+<meta charset="UTF-8">
 <html>
 <head>
 <style type="text/css">
 .thumbnails{
-	width: 30%;
+	width: 20%;
 	height: 80%;
 	border-width: thin;
 	border-color: black;
 	border-style: solid;
+	margin: 10px;
 	float: left;
 }
 
 .details{
-	width: 60%;
+	width: 75%;
 	height: 80%;
+	margin: 10px;
 	float: left;
+}
+
+.controller{
+	width: 80%;
+	border-width: thin;
+	border-color: black;
+	border-style: solid;
+	padding: 10px;
+	margin: 10px;
+	text-align: center;
+}
+.controller-page{
+	width: 50px;
 }
 
 </style>
@@ -21,49 +38,101 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script type="text/javascript">
 $(function(){
-	$('#dir').on('change', function(){
+	var per = 5;		// 一ページ当たりの表示が増数
+	var current = 1;	// 表示ページ数
+	var files;		// ファイル情報
 
+	//カレントページのサムネイルを表示
+	function DispCurrent(files, current){
 		var $thumbnails = $('#thumbnails').empty();
 
-	        // �t�@�C���̔z�񂩂�1���t�@�C����I��
-		$.each(this.files, function(){
-			//console.log(this);
-
-			//Reader�I�u�W�F�N�g�̐���
+		for(var i = per * (current -1); i < per * current; i++){
+			//Readerオブジェクトの生成
+			//オブジェクトを保持し続けるので、画像一つにつきReaderオブジェクトが一つ必要。
 			var reader = new FileReader();
+
 			reader.onerror = function (evt) {
 			        console.log("[Error!] " + evt);
-		        }
+	        	}
 
-			//�摜�t�@�C�������[�h
-		        if (this.type.match('image.*')) {
-			        reader.onload = function (evt) {
-					var $thumb = $('<img width="90%" src="' + evt.target.result + '"><br>').appendTo($thumbnails)
+			reader.onload = function (evt) {
+				var $thumb = $('<img width="100%" src="' + evt.target.result + '"><br>').appendTo($thumbnails)
 
-					$thumb.on('click', function(){
-						//console.log(this);
-						$('#details').attr('src', this.src);
-					});
-			        }
-	
-			        // �ǂݍ��ݏ������s
-			        reader.readAsDataURL(this);
-		        }
+				$thumb.on('click', function(){
+					//console.log(this);
+					$('#details').attr('src', this.src);
+				});
+			}
+
+		        // 読み込み処理実行
+		        reader.readAsDataURL(files[i]);
+		}
+	}
+
+	//イベントハンドラ(フォルダ選択)
+	$('#dir').on('change', function(){
+		// 画像ファイル情報のみを抽出
+		files = Array();
+		$.each(this.files, function(){
+			if (this.type.match('image.*')) {
+				files.push(this);
+			}
 		});
 
+		//ページ情報を表示
+		$('#current').val(current);
+		$('#pages').val(Math.ceil(files.length / per));
+
+		//カレントページのサムネイルを表示
+		DispCurrent(files, current);
+
+	});
+
+	//イベントハンドラ(前ページ)
+	$('#prev').on('click', function(){
+		if(current >1){
+			current--;
+
+			//ページ情報を表示
+			$('#current').val(current);
+
+			//カレントページのサムネイルを表示
+			DispCurrent(files, current);
+		}
+	});
+
+	//イベントハンドラ(次ページ)
+	$('#next').on('click', function(){
+		if(current < Math.ceil(files.length / per)){
+			current++;
+
+			//ページ情報を表示
+			$('#current').val(current);
+
+			//カレントページのサムネイルを表示
+			DispCurrent(files, current);
+		}
 	});
 });
 </script>
 </head>
-<h1>�Ȉ� �t�H�g �r���A�[</h1>
-v0.1(2015.02.16). Under MIT License. Created by Michihiro Yamazaki.
+<h1>簡易 フォト ビュアー</h1>
+v0.2(2015.02.17). Under MIT License. Created by Michihiro Yamazaki.
 <br><br>
 
-�摜�̂���t�H���_��I�����Ă�������(chrome�̂݃t�H���_�I����)�B<br>
-<input  type="file" id="dir" webkitdirectory directory>
-<br><br>
+<div id="conroller" class="controller">
+	画像のあるフォルダを選択してください(chromeのみフォルダ選択可)。
+	<input  type="file" id="dir" webkitdirectory directory>
+	<br><br>
+	<input type="button" id="prev" value="前ページ"> 
+	<input type="text" id="current" class="controller-page" readonly="readonly">
+	/
+	<input type="text" id="pages" class="controller-page" readonly="readonly">
+	<input type="button" id="next" value="次ページ"> 
+</div>
 
 <div id="thumbnails" class="thumbnails"></div>
-<div class="details"><img id="details" width="90%" src=""></div>
+
+<div class="details"><img id="details" width="100%" src=""></div>
 </body>
 </html>
